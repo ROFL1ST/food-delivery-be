@@ -11,27 +11,33 @@ class ProductController extends Controller
     // index
     public function index(Request $request)
     {
-        // get all products
-        $products = Product::with('user')->where('user_id', $request->user_id)->with('user')->get();
+
+        //get product by request user id
+        $products = Product::with('user')->where('user_id', $request->user()->id)
+            ->orderBy('created_at', 'DESC')
+            ->get();
+
+        // $products = Product::with('user')->whereHas('user', function ($query) use ($request) {
+        //     $query->where('roles', 'restaurant');
+        // })->get();
 
         return response()->json([
-            "status" => "success",
-            'message' => 'Products retrieved successfully',
-            'data' => $products,
-        ], 200);
+            'status' => 'success',
+            'message' => 'Product data loaded successfully',
+            'data' => $products
+        ]);
     }
 
     // get product by user id
-    public function getProductByUserId(Request $request)
+    public function getProductByUserId($userId)
     {
-        // get all products by user id
-        $products = Product::with('user')->where('user_id', $request->user_id)->with('user')->get();
+        $products = Product::with('user')->where('user_id', $userId)->get();
 
         return response()->json([
-            "status" => "success",
-            'message' => 'Products retrieved successfully',
-            'data' => $products,
-        ], 200);
+            'status' => 'success',
+            'message' => 'Product data loaded successfully',
+            'data' => $products
+        ]);
     }
 
     // store
@@ -60,7 +66,7 @@ class ProductController extends Controller
             $image_name = time() . '.' . $image->getClientOriginalExtension();
             $filePath = $image->storeAs('images/products', $image_name, 'public');
 
-            $product->image = 'images/' . $filePath;
+            $product->image =  $filePath;
             $product->save();
         }
 
@@ -76,21 +82,31 @@ class ProductController extends Controller
     public function update(Request $request, $id)
     {
         // validate request
-        $request->validate([
-            'name' => 'required|string',
-            'description' => 'required|string',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
-            'is_available' => 'required|boolean',
-            'is_favorite' => 'nullable|boolean',
-        ]);
+        if ($request->has('name')) {
+            $request->validate(['name' => 'required|string']);
+        }
+        if ($request->has('description')) {
+            $request->validate(['description' => 'required|string']);
+        }
+        if ($request->has('price')) {
+            $request->validate(['price' => 'required|numeric']);
+        }
+        if ($request->has('stock')) {
+            $request->validate(['stock' => 'required|integer']);
+        }
+        if ($request->has('is_available')) {
+            $request->validate(['is_available' => 'required|boolean']);
+        }
+        if ($request->has('is_favorite')) {
+            $request->validate(['is_favorite' => 'required|boolean']);
+        }
 
         // find product
         $product = Product::find($id);
 
         if (!$product) {
             return response()->json([
-                "status" => "error",
+                "status" => "failed",
                 'message' => 'Product not found',
             ], 404);
         }
@@ -116,7 +132,7 @@ class ProductController extends Controller
 
         if (!$product) {
             return response()->json([
-                "status" => "error",
+                "status" => "failed",
                 'message' => 'Product not found',
             ], 404);
         }
