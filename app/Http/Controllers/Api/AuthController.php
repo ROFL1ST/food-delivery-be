@@ -131,4 +131,12 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'Latlong updated successfully', 'data' => $user, "status" => "success"], 200);
     }
+
+    // get all restaurants
+    public function getAllRestaurants(Request $request)
+    {
+        $restaurants = User::where('roles', 'restaurant')->get();
+
+        return response()->json(['message' => 'Restaurants retrieved successfully', 'data' => $restaurants, "status" => "success"], 200);
+    }
 }
