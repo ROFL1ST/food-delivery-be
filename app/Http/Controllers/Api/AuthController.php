@@ -80,8 +80,8 @@ class AuthController extends Controller
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
             $filename = time() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('images'), $filename);
-            $user->photo = 'images/' . $filename;
+            $file->move(public_path('uploads/profile'), $filename);
+            $user->photo =  $filename;
             $user->save();
         }
 
@@ -110,8 +110,8 @@ class AuthController extends Controller
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
             $filename = time() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('images'), $filename);
-            $user->photo = 'images/' . $filename;
+            $file->move(public_path('uploads/profile'), $filename);
+            $user->photo =  $filename;
             $user->save();
         }
 
