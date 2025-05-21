@@ -100,6 +100,9 @@ class ProductController extends Controller
         if ($request->has('is_favorite')) {
             $request->validate(['is_favorite' => 'required|boolean']);
         }
+        if ($request->has('image')) {
+            $request->validate(['image' => 'required|image']);
+        }
 
         // find product
         $product = Product::find($id);
@@ -111,11 +114,24 @@ class ProductController extends Controller
             ], 404);
         }
 
+        // update image
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $image_name = time() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('uploads/products'), $image_name);
+
+            // delete old image
+            $oldImagePath = public_path('uploads/products') . DIRECTORY_SEPARATOR . $product->image;
+            if ($product->image && file_exists($oldImagePath)) {
+                unlink($oldImagePath);
+            }
+
+            $product->image = $image_name;
+        }
+
         // update product
-        $data = $request->all();
+        $data = $request->except(['image']);
         $product->update($data);
-
-
 
         return response()->json([
             "status" => "success",
@@ -123,6 +139,7 @@ class ProductController extends Controller
             'data' => $product,
         ], 200);
     }
+
 
     // destroy
     public function destroy($id)
