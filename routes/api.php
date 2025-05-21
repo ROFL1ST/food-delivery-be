@@ -28,7 +28,8 @@ Route::put('/user/update/latlong', [\App\Http\Controllers\Api\AuthController::cl
 // get all restaurants
 Route::get('/restaurants', [\App\Http\Controllers\Api\AuthController::class, 'getAllRestaurants']);
 
-Route::get('/producst', [\App\Http\Controllers\Api\ProductController::class, 'index'])->middleware('auth:sanctum');
+// get producst by restaurant id
+Route::get('/products', [\App\Http\Controllers\Api\ProductController::class, 'index'])->middleware('auth:sanctum');
 
 // create product
 Route::post('/products', [\App\Http\Controllers\Api\ProductController::class, 'store'])->middleware('auth:sanctum');
@@ -53,6 +54,9 @@ Route::get('/order/restaurant', [\App\Http\Controllers\Api\OrderController::clas
 
 // get order by driver id
 Route::get('/order/driver', [App\Http\Controllers\Api\OrderController::class, 'getOrdersByStatusDriver'])->middleware('auth:sanctum');
+
+// get order by id
+Route::get('/order/{id}', [\App\Http\Controllers\Api\OrderController::class, 'getOrderById'])->middleware('auth:sanctum');
 
 // update order status
 Route::put('/order/restaurant/update-status/{id}', [App\Http\Controllers\Api\OrderController::class, 'updateOrderStatus'])->middleware('auth:sanctum');

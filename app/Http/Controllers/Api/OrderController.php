@@ -124,6 +124,24 @@ class OrderController extends Controller
         ], 200);
     }
 
+    // get order by id
+    public function getOrderById(Request $request, $id)
+    {
+        $order = Order::with(['orderItems.product'])->find($id);
+        if (!$order) {
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'Order not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Order retrieved successfully',
+            'data' => $order
+        ], 200);
+    }
+
     // get order by status for restaurant
     public function getOrderByStatus(Request $request)
     {
