@@ -146,7 +146,7 @@ class OrderController extends Controller
     public function getOrderByStatus(Request $request)
     {
         $request->validate([
-            'status' => 'required|string|in:pending,processing,completed,canceled',
+            'status' => 'required|string|in:pending,processing,completed,canceled,ready_for_delivery,prepared',
         ]);
         $user = $request->user();
         if ($user->roles != 'restaurant') {
@@ -169,7 +169,7 @@ class OrderController extends Controller
     public function updateOrderStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|string|in:pending,processing,completed,canceled,ready_for_delivery,prepared',
+            'status' => 'required|string|in:pending,processing,canceled,ready_for_delivery,prepared',
         ]);
 
         $user = $request->user();
