@@ -127,7 +127,8 @@ class OrderController extends Controller
     // get order by id
     public function getOrderById(Request $request, $id)
     {
-        $order = Order::with(['orderItems.product'])->find($id);
+        $order = Order::with(['orderItems.product', 'user:id,name', 'restaurant:id,restaurant_name'])->find($id);
+
         if (!$order) {
             return response()->json([
                 'status' => 'failed',
@@ -135,19 +136,36 @@ class OrderController extends Controller
             ], 404);
         }
 
+        $formattedOrder = $order->toArray();
+
+        // Tambahkan user_name
+        $formattedOrder['user_name'] = $order->user ? $order->user->name : null;
+
+        // Tambahkan restaurant_name
+        $formattedOrder['restaurant_name'] = $order->restaurant ? $order->restaurant->restaurant_name : null;
+
+        // Tambahkan driver_name
+        $formattedOrder['driver_name'] = $order->driver ? $order->driver->name : null;
+
+        // Hapus objek user dan restaurant relasi yang tidak diinginkan di level root data
+        unset($formattedOrder['user']);
+        unset($formattedOrder['restaurant']);
+
         return response()->json([
             'status' => 'success',
             'message' => 'Order retrieved successfully',
-            'data' => $order
+            'data' => $formattedOrder
         ], 200);
     }
+
 
     // get order by status for restaurant
     public function getOrderByStatus(Request $request)
     {
         $request->validate([
-            'status' => 'required|string|in:pending,processing,completed,canceled,ready_for_delivery,prepared',
+            'status' => 'required|string|regex:/^[a-zA-Z_,]+$/',
         ]);
+
         $user = $request->user();
         if ($user->roles != 'restaurant') {
             return response()->json([
@@ -156,7 +174,32 @@ class OrderController extends Controller
             ], 401);
         }
 
-        $orders = Order::where('restaurant_id', $user->id)->where('status', $request->status)->with(['orderItems.product'])->get();
+        $requestedStatuses = explode(',', $request->status);
+
+        $allowedStatuses = [
+            'pending',
+            'processing',
+            'completed',
+            'canceled',
+            'ready_for_delivery',
+            'accepted_by_driver',
+            'on_the_way',
+            'prepared',
+        ];
+
+        $validStatuses = array_intersect($requestedStatuses, $allowedStatuses);
+
+        if (empty($validStatuses)) {
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'No valid status provided or recognized.',
+            ], 400);
+        }
+
+        $orders = Order::where('restaurant_id', $user->id)
+            ->whereIn('status', $validStatuses)
+            ->with(['orderItems.product'])
+            ->get();
 
         return response()->json([
             'status' => 'success',
@@ -164,6 +207,7 @@ class OrderController extends Controller
             'data' => $orders
         ], 200);
     }
+
 
     // update order status for restaurant
     public function updateOrderStatus(Request $request, $id)
@@ -240,7 +284,7 @@ class OrderController extends Controller
     public function updateOrderStatusDriver(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|string|in:pending,processing,completed,canceled,on_the_way,delivered',
+            'status' => 'required|string|in:canceled,accepted_by_driver,on_the_way,completed',
         ]);
 
         $order = Order::find($id);

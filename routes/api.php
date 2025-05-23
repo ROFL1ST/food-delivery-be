@@ -70,6 +70,8 @@ Route::put('/order/user/update-status/{id}', [App\Http\Controllers\Api\OrderCont
 
 // overview restaurant
 Route::get('/overview/restaurant', [\App\Http\Controllers\Api\OverviewController::class, 'overviewRestaurant'])->middleware('auth:sanctum');
+// overview popular menu items
+Route::get('/overview/popular-menu-items', [\App\Http\Controllers\Api\OverviewController::class, 'popularMenuItems'])->middleware('auth:sanctum');
 
 // overview driver
 Route::get('/overview/driver', [\App\Http\Controllers\Api\OverviewController::class, 'overviewDriver'])->middleware('auth:sanctum');
