@@ -19,7 +19,7 @@ class OverviewController extends Controller
         if ($user->roles === 'restaurant') {
             $totalOrders = Order::where('restaurant_id', $user->id)->count();
             $totalProducts = Product::where('user_id', $user->id)->count();
-            $totalRevenue = Order::where('restaurant_id', $user->id)->sum('total_bill');
+            $totalRevenue = Order::where('restaurant_id', $user->id)->where('status', 'completed')->sum('total_bill');
             $pendingOrders = Order::where('restaurant_id', $user->id)
                 ->where('status', 'pending')
                 ->count();
@@ -70,6 +70,7 @@ class OverviewController extends Controller
                     'name' => $product->name,
                     'image' => $product->image ?? 'https://via.placeholder.com/150/F2F2F2/333333?text=Gambar+Menu',
                     'sales' => (int)$product->total_sales . 'x terjual',
+                    'price' => (int)$product->price,
                 ];
             });
 
