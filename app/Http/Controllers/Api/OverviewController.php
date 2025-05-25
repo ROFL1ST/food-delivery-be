@@ -13,39 +13,85 @@ class OverviewController extends Controller
 {
     // overview restaurant
     public function overviewRestaurant(Request $request)
-    {
-        $user = $request->user();
+{
+    $user = $request->user();
 
-        if ($user->roles === 'restaurant') {
-            $totalOrders = Order::where('restaurant_id', $user->id)->count();
-            $totalProducts = Product::where('user_id', $user->id)->count();
-            $totalRevenue = Order::where('restaurant_id', $user->id)->where('status', 'completed')->sum('total_bill');
-            $pendingOrders = Order::where('restaurant_id', $user->id)
-                ->where('status', 'pending')
-                ->count();
-            $todayDeliveries = Order::where('restaurant_id', $user->id)
-                ->whereDate('updated_at', Carbon::today())
-                ->where('status', 'completed')
-                ->count();
+    if ($user->roles === 'restaurant') {
+        // Total transaksi hari ini
+        $totalOrdersToday = Order::where('restaurant_id', $user->id)
+            ->whereDate('updated_at', Carbon::today())
+            ->count();
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Overview data for restaurant fetched successfully.',
-                'data' => [
-                    'total_orders' => $totalOrders,
-                    'total_products' => $totalProducts,
-                    'total_revenue' => (float) $totalRevenue,
-                    'pending_orders' => $pendingOrders,
-                    'today_deliveries' => $todayDeliveries,
-                ],
-            ]);
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthorized',
-            ], 401);
-        }
+        // Total transaksi kemarin
+        $totalOrdersYesterday = Order::where('restaurant_id', $user->id)
+            ->whereDate('updated_at', Carbon::yesterday())
+            ->count();
+
+        // Persentase perubahan transaksi hari ini
+        $transactionPercentage = $totalOrdersYesterday > 0
+            ? (($totalOrdersToday - $totalOrdersYesterday) / $totalOrdersYesterday) * 100
+            : ($totalOrdersToday > 0 ? 100 : 0);
+
+        // Pesanan tertunda hari ini
+        $pendingOrders = Order::where('restaurant_id', $user->id)
+            ->where('status', 'pending')
+            ->count();
+
+        // Pesanan tertunda kemarin
+        $pendingOrdersYesterday = Order::where('restaurant_id', $user->id)
+            ->where('status', 'pending')
+            ->whereDate('updated_at', Carbon::yesterday())
+            ->count();
+
+        // Persentase perubahan pesanan tertunda
+        $pendingPercentage = $pendingOrdersYesterday > 0
+            ? (($pendingOrders - $pendingOrdersYesterday) / $pendingOrdersYesterday) * 100
+            : ($pendingOrders > 0 ? 100 : 0);
+
+        // Pengiriman hari ini
+        $todayDeliveries = Order::where('restaurant_id', $user->id)
+            ->whereDate('updated_at', Carbon::today())
+            ->where('status', 'completed')
+            ->count();
+
+        // Pengiriman kemarin
+        $yesterdayDeliveries = Order::where('restaurant_id', $user->id)
+            ->whereDate('updated_at', Carbon::yesterday())
+            ->where('status', 'completed')
+            ->count();
+
+        // Persentase perubahan pengiriman hari ini
+        $deliveryPercentage = $yesterdayDeliveries > 0
+            ? (($todayDeliveries - $yesterdayDeliveries) / $yesterdayDeliveries) * 100
+            : ($todayDeliveries > 0 ? 100 : 0);
+
+        // Data lainnya
+        $totalProducts = Product::where('user_id', $user->id)->count();
+        $totalRevenue = Order::where('restaurant_id', $user->id)
+            ->where('status', 'completed')
+            ->sum('total_bill');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Overview data for restaurant fetched successfully.',
+            'data' => [
+                'total_orders_today' => $totalOrdersToday,
+                'transaction_percentage' => round($transactionPercentage, 2),
+                'total_products' => $totalProducts,
+                'total_revenue' => (float) $totalRevenue,
+                'pending_orders' => $pendingOrders,
+                'pending_percentage' => round($pendingPercentage, 2),
+                'today_deliveries' => $todayDeliveries,
+                'delivery_percentage' => round($deliveryPercentage, 2),
+            ],
+        ]);
+    } else {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Unauthorized',
+        ], 401);
     }
+}
 
     public function popularMenuItems(Request $request)
     {
